@@ -1,0 +1,29 @@
+{
+  "name": "rqbuilder",
+  "version": "1.0.0",
+  "description": "provides an interface to easily query api that use the json standards",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trikss/rbuilder.git"
+  },
+  "author": "Ahmed Mahmood",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/trikss/rbuilder/issues"
+  },
+  "homepage": "https://github.com/trikss/rbuilder#readme",
+  "devDependencies": {
+    "@types/qs": "^6.9.7",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "qs": "^6.11.0"
+  }
+}
