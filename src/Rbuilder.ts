@@ -33,14 +33,15 @@ export default class Rbuilder {
   });
   static install(
     url: string,
-    interceptor:
+    onSuccess?:
       | ((
           value: AxiosResponse<any, any>
         ) => AxiosResponse<any, any> | Promise<AxiosResponse<any, any>>)
-      | undefined
+      | undefined,
+    onError?: ((error: any) => any) | undefined
   ) {
     Rbuilder.url = url;
-    Rbuilder.api.interceptors.response.use(interceptor);
+    Rbuilder.api.interceptors.response.use(onSuccess, onError);
   }
   protected constructor(resource: String) {
     this.resource = resource;
