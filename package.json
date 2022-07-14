@@ -1,6 +1,6 @@
 {
   "name": "rqbuilder",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "provides an interface to easily query api that use the json standards",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
