@@ -146,17 +146,17 @@ export default class Rbuilder {
   async all() {
     return (await this.api.get(`${this.baseUrl}/${this.resource}`)).data;
   }
-  async getPath(path: string) {
-    return (await this.api.get(`${this.baseUrl}/${path}`)).data;
+  static async getPath(path: string) {
+    return (await this.api.get(`${Rbuilder.url}/${path}`)).data;
   }
-  async postPath(path: string, data: unknown) {
-    return (await this.api.post(`${this.baseUrl}/${path}`, data)).data;
+  static async postPath(path: string, data: unknown) {
+    return (await this.api.post(`${Rbuilder.url}/${path}`, data)).data;
   }
-  async deletePath(path: string) {
-    return (await this.api.delete(`${this.baseUrl}/${path}`)).data;
+  static async deletePath(path: string) {
+    return (await this.api.delete(`${Rbuilder.url}/${path}`)).data;
   }
-  async putPath(path: string, data: unknown) {
-    return (await this.api.put(`${this.baseUrl}/${path}`, data)).data;
+  static async putPath(path: string, data: unknown) {
+    return (await this.api.put(`${Rbuilder.url}/${path}`, data)).data;
   }
   from(related: string, id: number) {
     this.params.relationship = { id, related };
