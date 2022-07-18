@@ -19,9 +19,15 @@ interface Relationship {
 }
 
 export default class Rbuilder {
+  static apiPrefix = true;
   static url = "https://jsonplaceholder.typicode.com/";
-  static make(resource: String) {
-    return new this(resource);
+  static make(resource: string, withPrefix?: boolean) {
+    if (withPrefix != undefined)
+      return withPrefix ? new this(`api\${resource}`) : new this(resource);
+    else
+      return Rbuilder.apiPrefix
+        ? new this(`api\${resource}`)
+        : new this(resource);
   }
 
   static api = axios.create({
@@ -33,6 +39,7 @@ export default class Rbuilder {
   });
   static install(
     url: string,
+    apiPrefix: boolean,
     onSuccess?:
       | ((
           value: AxiosResponse<any, any>
@@ -40,9 +47,11 @@ export default class Rbuilder {
       | undefined,
     onError?: ((error: any) => any) | undefined
   ) {
+    Rbuilder.apiPrefix = apiPrefix;
     Rbuilder.url = url;
     Rbuilder.api.interceptors.response.use(onSuccess, onError);
   }
+  apiPrefix = true;
   protected constructor(resource: String) {
     this.resource = resource;
     this.baseUrl = Rbuilder.url;
