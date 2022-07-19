@@ -1,6 +1,20 @@
 import axios, { AxiosResponse } from "axios";
 import { Query } from "./Query";
 
+export interface Config {
+  url: string;
+  appendApiToRequest: boolean;
+  onSuccess?:
+    | ((
+        value: AxiosResponse<any, any>
+      ) => AxiosResponse<any, any> | Promise<AxiosResponse<any, any>>)
+    | undefined;
+  onError?: ((error: any) => any) | undefined;
+}
+
+export interface ResourceConfig {
+  appendApiToRequest: boolean;
+}
 export interface Params {
   resourceId: null | number;
   includes: string[];
@@ -21,10 +35,12 @@ interface Relationship {
 export default class Rbuilder {
   static apiPrefix = true;
   static url = "https://jsonplaceholder.typicode.com/";
-  static make(resource: string, withPrefix?: boolean) {
-    if (withPrefix != undefined)
-      return withPrefix ? new this(`api\${resource}`) : new this(resource);
-    else
+  static make(resource: string, config?: ResourceConfig) {
+    if (config != undefined) {
+      return config.appendApiToRequest
+        ? new this(`api\${resource}`)
+        : new this(resource);
+    } else
       return Rbuilder.apiPrefix
         ? new this(`api\${resource}`)
         : new this(resource);
@@ -37,21 +53,12 @@ export default class Rbuilder {
     },
     withCredentials: true,
   });
-  static install(
-    url: string,
-    apiPrefix: boolean,
-    onSuccess?:
-      | ((
-          value: AxiosResponse<any, any>
-        ) => AxiosResponse<any, any> | Promise<AxiosResponse<any, any>>)
-      | undefined,
-    onError?: ((error: any) => any) | undefined
-  ) {
-    Rbuilder.apiPrefix = apiPrefix;
-    Rbuilder.url = url;
-    Rbuilder.api.interceptors.response.use(onSuccess, onError);
+  static install(config: Config) {
+    Rbuilder.apiPrefix = config.appendApiToRequest;
+    Rbuilder.url = config.url;
+    Rbuilder.api.interceptors.response.use(config.onSuccess, config.onError);
   }
-  apiPrefix = true;
+
   protected constructor(resource: String) {
     this.resource = resource;
     this.baseUrl = Rbuilder.url;
@@ -60,6 +67,10 @@ export default class Rbuilder {
   public baseUrl: String;
   private api = Rbuilder.api;
   private resource: String;
+  public response: AxiosResponse | undefined;
+  public get data() {
+    return this.response?.data;
+  }
 
   private params = {
     resourceId: null as unknown as number,
@@ -75,18 +86,18 @@ export default class Rbuilder {
 
   async create(data: unknown) {
     const res = await this.api.post(this.url(), data);
-    return res;
+    return this;
   }
   async update(id: number, data: unknown) {
     this.params.resourceId = id;
     const res = this.api.put(this.url(), data);
-    return res;
+    return this;
   }
 
   async delete(id: number) {
     this.params.resourceId = id;
     const res = this.api.delete(this.url());
-    return res;
+    return this;
   }
 
   page(page: number) {
@@ -141,31 +152,32 @@ export default class Rbuilder {
   }
   async find(id: number) {
     this.params.resourceId = id;
-    return await this.get();
+    await this.get();
+    return this;
   }
   async get() {
     try {
-      return await (
-        await this.api.get(this.url())
-      ).data;
+      this.response = await this.api.get(this.url());
+      return this;
     } catch (error) {
       throw error;
     }
   }
   async all() {
-    return (await this.api.get(`${this.baseUrl}/${this.resource}`)).data;
+    this.response = await this.api.get(`${this.baseUrl}/${this.resource}`);
+    return this;
   }
   static async getPath(path: string) {
-    return (await this.api.get(`${Rbuilder.url}/${path}`)).data;
+    return await this.api.get(`${Rbuilder.url}/${path}`);
   }
   static async postPath(path: string, data: unknown) {
-    return (await this.api.post(`${Rbuilder.url}/${path}`, data)).data;
+    return await this.api.post(`${Rbuilder.url}/${path}`, data);
   }
   static async deletePath(path: string) {
-    return (await this.api.delete(`${Rbuilder.url}/${path}`)).data;
+    return await this.api.delete(`${Rbuilder.url}/${path}`);
   }
   static async putPath(path: string, data: unknown) {
-    return (await this.api.put(`${Rbuilder.url}/${path}`, data)).data;
+    return await this.api.put(`${Rbuilder.url}/${path}`, data);
   }
   from(related: string, id: number) {
     this.params.relationship = { id, related };
@@ -216,7 +228,6 @@ export default class Rbuilder {
     const url = this.baseUrl
       ? this.baseUrl + this.parsePath()
       : this.parsePath();
-    // reset the url so the query object can be re-used
     return url;
   }
 }
