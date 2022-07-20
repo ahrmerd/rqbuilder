@@ -25,6 +25,7 @@ export interface Params {
   limit: number | null;
   offset: number | null;
   relationship: Relationship | null;
+  appends: Record<string, string | number>;
 }
 
 interface Relationship {
@@ -34,15 +35,15 @@ interface Relationship {
 
 export default class Rbuilder {
   static apiPrefix = true;
-  static url = "https://jsonplaceholder.typicode.com/";
+  static url = "https://jsonplaceholder.typicode.com";
   static make(resource: string, config?: ResourceConfig) {
     if (config != undefined) {
       return config.appendApiToRequest
-        ? new this(`api\${resource}`)
+        ? new this(`api/${resource}`)
         : new this(resource);
     } else
       return Rbuilder.apiPrefix
-        ? new this(`api\${resource}`)
+        ? new this(`api/${resource}`)
         : new this(resource);
   }
 
@@ -59,14 +60,14 @@ export default class Rbuilder {
     Rbuilder.api.interceptors.response.use(config.onSuccess, config.onError);
   }
 
-  protected constructor(resource: String) {
+  protected constructor(resource: string) {
     this.resource = resource;
     this.baseUrl = Rbuilder.url;
     this.api = Rbuilder.api;
   }
-  public baseUrl: String;
+  public baseUrl: string;
   private api = Rbuilder.api;
-  private resource: String;
+  public resource: string;
   public response: AxiosResponse | undefined;
   public get data() {
     return this.response?.data;
@@ -81,22 +82,24 @@ export default class Rbuilder {
     perPage: <number>(<unknown>null),
     limit: <number>(<unknown>null),
     offset: <number>(<unknown>null),
+    appends: {} as Record<string, string | number>,
+
     relationship: <Relationship>(<unknown>null),
   } as Params;
 
   async create(data: unknown) {
-    const res = await this.api.post(this.url(), data);
+    this.response = await this.api.post(this.url(), data);
     return this;
   }
   async update(id: number, data: unknown) {
     this.params.resourceId = id;
-    const res = this.api.put(this.url(), data);
+    this.response = await this.api.put(this.url(), data);
     return this;
   }
 
   async delete(id: number) {
     this.params.resourceId = id;
-    const res = this.api.delete(this.url());
+    this.response = await this.api.delete(this.url());
     return this;
   }
 
@@ -115,37 +118,14 @@ export default class Rbuilder {
   }
 
   where(column: string, value: string | number) {
-    if (column === undefined || value === undefined) {
-      throw new Error(
-        "The where() function takes 2 arguments both of string values."
-      );
-    }
     this.params.filters[column] = value;
     return this;
   }
-  whereIn(column: string, values: string | number[]) {
-    if (!column || !values) {
-      throw new Error(
-        "The whereIn() function takes 2 arguments of (string, array)."
-      );
-    }
-    if ((!column && Array.isArray(column)) || typeof column === "object") {
-      throw new Error(
-        "The first argument for the whereIn() function must be a string or integer."
-      );
-    }
-    if (!Array.isArray(values)) {
-      throw new Error(
-        "The second argument for the whereIn() function must be an array."
-      );
-    }
+  whereIn(column: string, values: string[] | number[]) {
     this.params.filters[column] = values.join(",");
     return this;
   }
   with(models: string[]) {
-    if (!models.length) {
-      throw new Error(`The with() function takes at least one argument.`);
-    }
     this.params.includes.push(...models);
 
     return this;
@@ -156,12 +136,8 @@ export default class Rbuilder {
     return this;
   }
   async get() {
-    try {
-      this.response = await this.api.get(this.url());
-      return this;
-    } catch (error) {
-      throw error;
-    }
+    this.response = await this.api.get(this.url());
+    return this;
   }
   async all() {
     this.response = await this.api.get(`${this.baseUrl}/${this.resource}`);
@@ -188,36 +164,32 @@ export default class Rbuilder {
     this.params.sorts.push(sort);
     return this;
   }
+  append(key: string, value: string) {
+    this.params.appends[key] = value;
+    return this;
+  }
   limit(value: number) {
-    if (!Number.isInteger(value)) {
-      throw new Error(
-        "The limit() function takes a single argument of a number."
-      );
-    }
     this.params.limit = value;
     return this;
   }
   offset(value: number) {
-    if (!Number.isInteger(value)) {
-      throw new Error(
-        "The limit() function takes a single argument of a number."
-      );
-    }
     this.params.offset = value;
     return this;
   }
 
   path() {
-    return this.params.relationship == null
-      ? `/${this.resource}${
-          this.params.resourceId ? "/" + this.params.resourceId : ""
-        }`
-      : `/${this.params.relationship.related}/${this.params.relationship.id}/${this.resource}`;
+    if (this.params.relationship == null) {
+      return `/${this.resource}${
+        this.params.resourceId ? "/" + this.params.resourceId : ""
+      }`;
+    } else
+      return this.resource.includes("api")
+        ? `/api/${this.params.relationship.related}/${
+            this.params.relationship.id
+          }/${this.resource.replace("api/", "")}`
+        : `/${this.params.relationship.related}/${this.params.relationship.id}/${this.resource}`;
   }
   parsePath() {
-    if (!this.resource) {
-      throw new Error("Please set the resource type for your model");
-    }
     return `${this.path()}?${this.parseQuery()}`;
   }
   parseQuery() {
@@ -225,9 +197,6 @@ export default class Rbuilder {
     return query.parse();
   }
   url() {
-    const url = this.baseUrl
-      ? this.baseUrl + this.parsePath()
-      : this.parsePath();
-    return url;
+    return this.baseUrl + this.parsePath();
   }
 }

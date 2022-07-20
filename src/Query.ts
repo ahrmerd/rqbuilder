@@ -7,6 +7,8 @@ interface query {
   page: number;
   perPage: number;
   sort: string;
+  offset: number;
+  appends: Record<string, string | number>;
 }
 
 export class Query {
@@ -14,6 +16,7 @@ export class Query {
   includes: string[];
   sorts: string[];
   filters: Record<string, string | number>;
+  appends: Record<string, string | number>;
   page: number | null;
   perPage: number | null;
   limit: number | null;
@@ -29,10 +32,8 @@ export class Query {
     this.filters = params.filters;
     this.page = params.page;
     this.limit = params.limit;
+    this.appends = params.appends;
   }
-  //   prepend() {
-  //     return this.uri === "" ? "?" : "&";
-  //   }
   include() {
     if (!(this.includes.length > 0)) {
       return;
@@ -59,11 +60,14 @@ export class Query {
   setPerPage() {
     if (this.perPage == null) return;
     this.query.perPage = this.perPage;
-    // this.query.page = this.page;
   }
   setLimit() {
     if (this.limit == null) return;
     this.query.limit = this.limit;
+  }
+  setOffset() {
+    if (this.offset == null) return;
+    this.query.offset = this.offset;
   }
   parse() {
     this.include();
@@ -72,7 +76,12 @@ export class Query {
     this.setPage();
     this.setPerPage();
     this.setLimit();
-    this.uri = qs.stringify(this.query, { encode: false });
+    this.setOffset();
+
+    this.uri = qs.stringify(
+      { ...this.appends, ...this.query },
+      { encode: false }
+    );
     return this.uri;
   }
 }
