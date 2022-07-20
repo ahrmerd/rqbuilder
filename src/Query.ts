@@ -1,4 +1,4 @@
-import { Params } from "./Rbuilder";
+import { Params } from "./RQbuilder";
 import qs from "qs";
 interface query {
   filter: Record<string, string | number>;

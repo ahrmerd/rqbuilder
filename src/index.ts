@@ -1,2 +1,2 @@
-import Rbuilder from "./Rbuilder";
-export default Rbuilder;
+import RQbuilder from "./RQbuilder";
+export { RQbuilder };

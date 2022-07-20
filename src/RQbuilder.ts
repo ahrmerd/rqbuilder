@@ -16,7 +16,7 @@ export interface ResourceConfig {
   appendApiToRequest: boolean;
 }
 export interface Params {
-  resourceId: null | number;
+  resourceId: null | number | string;
   includes: string[];
   sorts: string[];
   filters: Record<string, string | number>;
@@ -29,7 +29,7 @@ export interface Params {
 }
 
 interface Relationship {
-  id: number;
+  id: number | string;
   related: string;
 }
 
@@ -130,7 +130,7 @@ export default class Rbuilder {
 
     return this;
   }
-  async find(id: number) {
+  async find(id: number | string) {
     this.params.resourceId = id;
     await this.get();
     return this;
@@ -155,7 +155,7 @@ export default class Rbuilder {
   static async putPath(path: string, data: unknown) {
     return await this.api.put(`${Rbuilder.url}/${path}`, data);
   }
-  from(related: string, id: number) {
+  from(related: string, id: number | string) {
     this.params.relationship = { id, related };
     return this;
   }
