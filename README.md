@@ -41,7 +41,7 @@ Make a http request by calling the functions you need in a simple and elegant wa
 
 ```js
 // Import
-import { RQbuilder } from "../src";
+import { RQbuilder } from "RQbuilder";
 
 //if /api/** is needed to access the url set appendApiToRequest to true
 RQbuilder.install({ url: "https://test.com", appendApiToRequest: true });
